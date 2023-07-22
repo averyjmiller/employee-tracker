@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/averyjmiller/employee-tracker#readme",
   "dependencies": {
+    "express": "^4.16.4",
     "inquirer": "^8.2.4",
     "mysql2": "^2.2.5"
   }
