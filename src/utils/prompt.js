@@ -54,7 +54,19 @@ function init() {
         });
         break;
       case "Add a department":
-        console.log("Adding a department");
+        inquirer.prompt([
+          {
+            type: 'input',
+            message: 'What is the name of the department?',
+            name: 'name'
+          }
+        ])
+        .then((answer) => {
+          db.query(`INSERT INTO department (name)
+                    VALUES (?)`, answer.name);
+          console.log(`Added ${answer.name} to departments`);
+          init();
+        });
         break;
       case "Add a role":
         console.log("Adding a role");

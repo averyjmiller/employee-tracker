@@ -23,18 +23,6 @@ class Query {
     });
     console.log('\n');
   }
-  addDepartment() {
-
-  }
-  addRole() {
-
-  }
-  addEmployee() {
-
-  }
-  updateEmployee() {
-
-  }
 }
 
 module.exports = Query;
