@@ -7,7 +7,7 @@ function init() {
   .prompt([
     {
       type: "list",
-      message: "",
+      message: "What would you like to do?",
       name: "query",
       choices: [
         "View all departments",
@@ -16,8 +16,7 @@ function init() {
         "Add a department",
         "Add a role",
         "Add an employee",
-        "Update an employee role",
-        "Quit"
+        "Update an employee role"
       ]
     }
   ])
@@ -25,23 +24,32 @@ function init() {
     const query = new Query();
     switch(answer.query) {
       case "View all departments":
-        console.log("Viewing all departments");
-        db.query(query.display('department'), function(err, results) {
-          console.log(results);
+        db.query(`SELECT * FROM department`, function(err, rows) {
+          query.displayDepartments(rows);
           init();
         });
         break;
       case "View all roles":
-        console.log("Viewing all roles");
-        db.query(query.display('role'), function(err, results) {
-          console.log(results);
+        db.query(`SELECT role.id, role.title, department.name, role.salary 
+                  FROM role 
+                  JOIN department 
+                  ON role.department_id = department.id;`, function(err, rows) {
+          query.displayRoles(rows);
           init();
         });
         break;
       case "View all employees":
         console.log("Viewing all employees");
-        db.query(query.display('employee'), function(err, results) {
-          console.log(results);
+        db.query(`SELECT e.id, e.first_name, e.last_name, role.title, department.name, role.salary,
+                    CONCAT(m.first_name, ' ', m.last_name) AS manager
+                  FROM employee e
+                  LEFT JOIN employee m
+                  ON m.id = e.manager_id
+                  JOIN role
+                  ON e.role_id = role.id
+                  JOIN department
+                  ON role.department_id = department.id;`, function(err, rows) {
+          query.displayEmployees(rows)          
           init();
         });
         break;
