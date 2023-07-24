@@ -1,6 +1,5 @@
 const inquirer = require('inquirer');
-const db = require('./db');
-const Query = require('./query');
+const Query = require('./db');
 
 function init() {
   inquirer
@@ -24,34 +23,13 @@ function init() {
     const query = new Query();
     switch(answer.query) {
       case "View all departments":
-        db.query(`SELECT * FROM department`, function(err, rows) {
-          query.displayDepartments(rows);
-          init();
-        });
+        query.viewDepartments();
         break;
       case "View all roles":
-        db.query(`SELECT role.id, role.title, department.name, role.salary 
-                  FROM role 
-                  JOIN department 
-                  ON role.department_id = department.id;`, function(err, rows) {
-          query.displayRoles(rows);
-          init();
-        });
+        query.viewRoles();
         break;
       case "View all employees":
-        console.log("Viewing all employees");
-        db.query(`SELECT e.id, e.first_name, e.last_name, role.title, department.name, role.salary,
-                    CONCAT(m.first_name, ' ', m.last_name) AS manager
-                  FROM employee e
-                  LEFT JOIN employee m
-                  ON m.id = e.manager_id
-                  JOIN role
-                  ON e.role_id = role.id
-                  JOIN department
-                  ON role.department_id = department.id;`, function(err, rows) {
-          query.displayEmployees(rows)          
-          init();
-        });
+        query.viewEmployees();
         break;
       case "Add a department":
         inquirer.prompt([
@@ -65,7 +43,6 @@ function init() {
           db.query(`INSERT INTO department (name)
                     VALUES (?)`, answer.name);
           console.log(`Added ${answer.name} to departments`);
-          init();
         });
         break;
       case "Add a role":
@@ -92,7 +69,6 @@ function init() {
                     VALUES (?, ?, ?)`, 
                     [answer.name, answer.salary, parseInt(answer.department)]);
           console.log(`Added ${answer.name} to roles`);
-          init();
         });
         break;
       case "Add an employee":
@@ -131,7 +107,6 @@ function init() {
                     VALUES (?, ?, ?, ?)`, 
                     [answer.first_name, answer.last_name, parseInt(answer.role), manager_id]);
           console.log(`Added ${answer.first_name} ${answer.last_name} to employees`);
-          init();
         });
         break;
       case "Update an employee role":
@@ -141,6 +116,9 @@ function init() {
         console.log(`Switch case error`);
         break;
     }
+  })
+  .then(() => {
+    init();
   });
 }
 
