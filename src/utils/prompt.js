@@ -69,7 +69,31 @@ function init() {
         });
         break;
       case "Add a role":
-        console.log("Adding a role");
+        inquirer.prompt([
+          {
+            type: 'input',
+            message: 'What is the name of the role?',
+            name: 'name'
+          },
+          {
+            type: 'input',
+            message: 'What is the salary of the role?',
+            name: 'salary'
+          },
+          {
+            type: 'list',
+            message: 'Which department does the role belong to?',
+            name: 'department',
+            choices: getDepartmentsArr()
+          }
+        ])
+        .then((answer) => {
+          db.query(`INSERT INTO role (title, salary, department_id)
+                    VALUES (?, ?, ?)`, 
+                    [answer.name, answer.salary, parseInt(answer.department)]);
+          console.log(`Added ${answer.name} to roles`);
+          init();
+        });
         break;
       case "Add an employee":
         console.log("Adding an employee");
@@ -84,6 +108,18 @@ function init() {
         break;
     }
   });
+}
+
+function getDepartmentsArr() {
+  const arr = [];
+  db.query(`SELECT * FROM department`, (err, rows) => {
+    let i = 0;
+    rows.forEach((row) => {
+      arr[i] = { name: row.name, value: row.id.toString() };
+      i++;
+    });
+  });
+  return arr;
 }
 
 module.exports = init;
