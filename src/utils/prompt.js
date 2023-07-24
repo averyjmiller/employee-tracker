@@ -96,12 +96,46 @@ function init() {
         });
         break;
       case "Add an employee":
-        console.log("Adding an employee");
+        inquirer.prompt([
+          {
+            type: 'input',
+            message: 'What is the employee\'s first name?',
+            name: 'first_name'
+          },
+          {
+            type: 'input',
+            message: 'What is the employee\'s last name?',
+            name: 'last_name'
+          },
+          {
+            type: 'list',
+            message: 'What is the employee\'s role?',
+            name: 'role',
+            choices: getRolesArr()
+          },
+          {
+            type: 'list',
+            message: 'Who is the employee\'s manager?',
+            name: 'manager',
+            choices: getEmployeesArr()
+          }
+        ])
+        .then((answer) => {
+          let manager_id;
+          if(answer.manager) {
+            manager_id = parseInt(answer.manager);
+          } else {
+            manager_id = answer.manager;
+          }
+          db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
+                    VALUES (?, ?, ?, ?)`, 
+                    [answer.first_name, answer.last_name, parseInt(answer.role), manager_id]);
+          console.log(`Added ${answer.first_name} ${answer.last_name} to employees`);
+          init();
+        });
         break;
       case "Update an employee role":
         console.log("Updating an employee role");
-        break;
-      case "Quit":
         break;
       default:
         console.log(`Switch case error`);
@@ -116,6 +150,30 @@ function getDepartmentsArr() {
     let i = 0;
     rows.forEach((row) => {
       arr[i] = { name: row.name, value: row.id.toString() };
+      i++;
+    });
+  });
+  return arr;
+}
+
+function getRolesArr() {
+  const arr = [];
+  db.query(`SELECT * FROM role`, (err, rows) => {
+    let i = 0;
+    rows.forEach((row) => {
+      arr[i] = { name: row.title, value: row.id.toString() };
+      i++;
+    });
+  });
+  return arr;
+}
+
+function getEmployeesArr() {
+  const arr = [{ name: 'None', value: null }];
+  db.query(`SELECT * FROM employee`, (err, rows) => {
+    let i = 1;
+    rows.forEach((row) => {
+      arr[i] = { name: `${row.first_name} ${row.last_name}`, value: row.id.toString() };
       i++;
     });
   });
