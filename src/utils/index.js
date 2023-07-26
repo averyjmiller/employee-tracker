@@ -112,6 +112,42 @@ class Query {
       prompt();
     });
   }
+  updateEmployeeRole() {
+    db.query(`SELECT id, first_name, last_name FROM employee`, (err, rows) => {
+      const employeeArr = rows.map(({ id, first_name, last_name }) => ({ name: `${first_name} ${last_name}`, value: id }));
+      inquirer.prompt([
+        {
+          type: 'list',
+          message: 'Which employee\'s role do you want to update?',
+          name: 'employee',
+          choices: employeeArr
+        }
+      ])
+      .then((answer) => {
+        const answerArr = [answer.employee];
+        db.query(`SELECT id, title FROM role`, (err, rows) => {
+          const rolesArr = rows.map(({ id, title }) => ({ name: title, value: id }));
+          inquirer.prompt([
+            {
+              type: 'list',
+              message: 'Which role do you want to assign the selected employee?',
+              name: 'role',
+              choices: rolesArr
+            }    
+          ])
+          .then((answer) => {
+            answerArr.push(answer.role);
+            db.query(`UPDATE employee
+                      SET role_id = ?
+                      WHERE id = ?`, [answerArr[1], answerArr[0]], (err, rows) => {
+              console.table(rows);
+              prompt();
+            });
+          });
+        });
+      });
+    });
+  }
   #getDepartmentsArr() {
     const arr = [];
     db.query(`SELECT * FROM department`, (err, rows) => {
@@ -186,7 +222,7 @@ const prompt = () => {
         query.addEmployee();
         break;
       case "Update an employee role":
-        console.log("Updating an employee role");
+        query.updateEmployeeRole();
         break;
       default:
         console.log(`Switch case error`);
