@@ -1,5 +1,5 @@
 const express = require('express');
-const init = require('./src/utils/prompt');
+const init = require('./src/utils/index');
 
 const PORT = process.env.PORT || 3001;
 const app = express();
