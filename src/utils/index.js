@@ -9,7 +9,7 @@ class Query {
     });
   }
   viewRoles() {
-    db.query(`SELECT role.id, role.title, department.name, role.salary 
+    db.query(`SELECT role.id, role.title, department.name AS department, role.salary 
               FROM role 
               JOIN department 
               ON role.department_id = department.id;`, (err, rows) => {
@@ -18,7 +18,7 @@ class Query {
     });
   }
   viewEmployees() {
-    db.query(`SELECT e.id, e.first_name, e.last_name, role.title, department.name, role.salary,
+    db.query(`SELECT e.id, e.first_name, e.last_name, role.title, department.name AS department, role.salary,
                 CONCAT(m.first_name, ' ', m.last_name) AS manager
               FROM employee e
               LEFT JOIN employee m
@@ -181,7 +181,7 @@ class Query {
                   prompt();
                 });
               });
-            })
+            });
           });
         });
       });
