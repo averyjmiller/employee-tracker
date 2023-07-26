@@ -57,20 +57,29 @@ class Query {
         type: 'input',
         message: 'What is the salary of the role?',
         name: 'salary'
-      },
-      {
-        type: 'list',
-        message: 'Which department does the role belong to?',
-        name: 'department',
-        choices: this.#getDepartmentsArr()
       }
     ])
     .then((answer) => {
-      db.query(`INSERT INTO role (title, salary, department_id)
-                VALUES (?, ?, ?)`, 
-                [answer.name, answer.salary, parseInt(answer.department)]);
-      console.log(`Added ${answer.name} to roles`);
-      prompt();
+      const answerArr = [answer.name, answer.salary];
+      db.query(`SELECT id, name FROM department`, (err, rows) => {
+        const departmentsArr = rows.map(({ id, name }) => ({ name: name, value: id }));
+        inquirer.prompt([
+          {
+            type: 'list',
+            message: 'Which department does the role belong to?',
+            name: 'department',
+            choices: departmentsArr
+          }    
+        ])
+        .then((answer) => {
+          answerArr.push(answer.department);
+          db.query(`INSERT INTO role (title, salary, department_id)
+                    VALUES (?, ?, ?)`, 
+                    [answerArr[0], answerArr[1], answerArr[2]]);
+          console.log(`Added ${answerArr[0]} to roles`);
+          prompt();
+        });
+      });
     });
   }
   addEmployee() {
