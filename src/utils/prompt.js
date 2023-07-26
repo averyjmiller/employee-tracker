@@ -62,7 +62,7 @@ class Query {
         type: 'list',
         message: 'Which department does the role belong to?',
         name: 'department',
-        choices: getDepartmentsArr()
+        choices: this.#getDepartmentsArr()
       }
     ])
     .then((answer) => {
@@ -89,13 +89,13 @@ class Query {
         type: 'list',
         message: 'What is the employee\'s role?',
         name: 'role',
-        choices: getRolesArr()
+        choices: this.#getRolesArr()
       },
       {
         type: 'list',
         message: 'Who is the employee\'s manager?',
         name: 'manager',
-        choices: getEmployeesArr()
+        choices: this.#getEmployeesArr()
       }
     ])
     .then((answer) => {
@@ -112,6 +112,39 @@ class Query {
       prompt();
     });
   }
+  #getDepartmentsArr() {
+    const arr = [];
+    db.query(`SELECT * FROM department`, (err, rows) => {
+      let i = 0;
+      rows.forEach((row) => {
+        arr[i] = { name: row.name, value: row.id.toString() };
+        i++;
+      });
+    });
+    return arr;
+  }
+  #getRolesArr() {
+    const arr = [];
+    db.query(`SELECT * FROM role`, (err, rows) => {
+      let i = 0;
+      rows.forEach((row) => {
+        arr[i] = { name: row.title, value: row.id.toString() };
+        i++;
+      });
+    });
+    return arr;
+  }
+  #getEmployeesArr() {
+    const arr = [{ name: 'None', value: null }];
+    db.query(`SELECT * FROM employee`, (err, rows) => {
+      let i = 1;
+      rows.forEach((row) => {
+        arr[i] = { name: `${row.first_name} ${row.last_name}`, value: row.id.toString() };
+        i++;
+      });
+    });
+    return arr;
+  }  
 }
 
 const prompt = () => {
@@ -160,42 +193,6 @@ const prompt = () => {
         break;
     }
   });
-}
-
-function getDepartmentsArr() {
-  const arr = [];
-  db.query(`SELECT * FROM department`, (err, rows) => {
-    let i = 0;
-    rows.forEach((row) => {
-      arr[i] = { name: row.name, value: row.id.toString() };
-      i++;
-    });
-  });
-  return arr;
-}
-
-function getRolesArr() {
-  const arr = [];
-  db.query(`SELECT * FROM role`, (err, rows) => {
-    let i = 0;
-    rows.forEach((row) => {
-      arr[i] = { name: row.title, value: row.id.toString() };
-      i++;
-    });
-  });
-  return arr;
-}
-
-function getEmployeesArr() {
-  const arr = [{ name: 'None', value: null }];
-  db.query(`SELECT * FROM employee`, (err, rows) => {
-    let i = 1;
-    rows.forEach((row) => {
-      arr[i] = { name: `${row.first_name} ${row.last_name}`, value: row.id.toString() };
-      i++;
-    });
-  });
-  return arr;
 }
 
 module.exports = prompt;
