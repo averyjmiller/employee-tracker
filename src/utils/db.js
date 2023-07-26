@@ -18,6 +18,10 @@ class Query {
     .then(([rows]) => {
       console.log('\n');
       console.table(rows);
+      console.log('\n');
+      console.log('\n');
+      console.log('\n');
+      console.log('\n');
     });
   }
   viewRoles() {
@@ -30,6 +34,10 @@ class Query {
     .then(([rows]) => {
       console.log('\n');
       console.table(rows);
+      console.log('\n');
+      console.log('\n');
+      console.log('\n');
+      console.log('\n');
     });
   }
   viewEmployees() {
@@ -47,6 +55,10 @@ class Query {
     .then(([rows]) => {
       console.log('\n');
       console.table(rows);
+      console.log('\n');
+      console.log('\n');
+      console.log('\n');
+      console.log('\n');
     });
   }
 }
