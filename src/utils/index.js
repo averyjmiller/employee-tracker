@@ -112,13 +112,13 @@ class Query {
           db.query(`SELECT id, first_name, last_name FROM employee`, (err, rows) => {
             const nullArr = [{ name: 'None', value: null }];
             const mappedArr = rows.map(({ id, first_name, last_name }) => ({ name: `${first_name} ${last_name}`, value: id }));
-            const employeeArr = nullArr.concat(mappedArr);
+            const managerArr = nullArr.concat(mappedArr);
             inquirer.prompt([
               {
                 type: 'list',
                 message: 'Who is the employee\'s manager?',
                 name: 'manager',
-                choices: employeeArr
+                choices: managerArr
               }
             ])
             .then((answer) => {
@@ -159,12 +159,29 @@ class Query {
           ])
           .then((answer) => {
             answerArr.push(answer.role);
-            db.query(`UPDATE employee
-                      SET role_id = ?
-                      WHERE id = ?`, [answerArr[1], answerArr[0]], (err, rows) => {
-              console.table(rows);
-              prompt();
-            });
+            db.query(`SELECT id, first_name, last_name FROM employee`, (err, rows) => {
+              const nullArr = [{ name: 'None', value: null }];
+              const mappedArr = rows.map(({ id, first_name, last_name }) => ({ name: `${first_name} ${last_name}`, value: id }));
+              const managerArr = nullArr.concat(mappedArr);
+              inquirer.prompt([
+                {
+                  type: 'list',
+                  message: 'Who is the employee\'s new manager?',
+                  name: 'manager',
+                  choices: managerArr
+                }
+              ])
+              .then((answer) => {
+                answerArr.push(answer.manager);
+                db.query(`UPDATE employee
+                          SET role_id = ?,
+                              manager_id = ?
+                          WHERE id = ?`, [answerArr[1], answerArr[2], answerArr[0]], (err, rows) => {
+                  console.table(rows);
+                  prompt();
+                });
+              });
+            })
           });
         });
       });
