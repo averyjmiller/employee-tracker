@@ -3,33 +3,45 @@ const db = require('../config/connection');
 
 class Query {
   viewDepartments() {
-    db.query(`SELECT * FROM department`, (err, rows) => {
-      console.table(rows);
-      prompt();
-    });
+    db.promise().query(`SELECT * FROM department`)
+      .then(([rows, fields]) => {
+        console.table(rows);
+        prompt();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
   viewRoles() {
-    db.query(`SELECT role.id, role.title, department.name AS department, role.salary 
-              FROM role 
-              JOIN department 
-              ON role.department_id = department.id;`, (err, rows) => {
-      console.table(rows);
-      prompt();
-    });
+    db.promise().query(`SELECT role.id, role.title, department.name AS department, role.salary 
+                        FROM role 
+                        JOIN department 
+                        ON role.department_id = department.id;`)
+      .then(([rows, fields]) => {
+        console.table(rows);
+        prompt();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
   viewEmployees() {
-    db.query(`SELECT e.id, e.first_name, e.last_name, role.title, department.name AS department, role.salary,
-                CONCAT(m.first_name, ' ', m.last_name) AS manager
-              FROM employee e
-              LEFT JOIN employee m
-              ON m.id = e.manager_id
-              JOIN role
-              ON e.role_id = role.id
-              JOIN department
-              ON role.department_id = department.id;`, (err, rows) => {
-      console.table(rows);
-      prompt();
-    });
+    db.promise().query(`SELECT e.id, e.first_name, e.last_name, role.title, department.name AS department, role.salary,
+                          CONCAT(m.first_name, ' ', m.last_name) AS manager
+                        FROM employee e
+                        LEFT JOIN employee m
+                        ON m.id = e.manager_id
+                        JOIN role
+                        ON e.role_id = role.id
+                        JOIN department
+                        ON role.department_id = department.id;`)
+      .then(([rows, fields]) => {
+        console.table(rows);
+        prompt();
+      })
+      .catch((err) => {
+        console.log(err);
+      });
   }
   addDepartment() {
     inquirer.prompt([
@@ -39,11 +51,16 @@ class Query {
         name: 'name'
       }
     ])
-    .then((answer) => {
-      db.query(`INSERT INTO department (name)
-                VALUES (?)`, answer.name);
-      console.log(`Added ${answer.name} to departments`);
-      prompt();
+    .then((res) => {
+      db.promise().query(`INSERT INTO department (name)
+                          VALUES (?)`, res.name)
+        .then(() => {
+          console.log(`Added ${res.name} to departments`);
+          prompt();
+        })
+        .catch((err) => {
+          console.log(err);
+        });
     });
   }
   addRole() {
@@ -59,27 +76,36 @@ class Query {
         name: 'salary'
       }
     ])
-    .then((answer) => {
-      const answerArr = [answer.name, answer.salary];
-      db.query(`SELECT id, name FROM department`, (err, rows) => {
-        const departmentsArr = rows.map(({ id, name }) => ({ name: name, value: id }));
-        inquirer.prompt([
-          {
-            type: 'list',
-            message: 'Which department does the role belong to?',
-            name: 'department',
-            choices: departmentsArr
-          }    
-        ])
-        .then((answer) => {
-          answerArr.push(answer.department);
-          db.query(`INSERT INTO role (title, salary, department_id)
-                    VALUES (?, ?, ?)`, 
-                    [answerArr[0], answerArr[1], answerArr[2]]);
-          console.log(`Added ${answerArr[0]} to roles`);
-          prompt();
+    .then((res) => {
+      const resArr = [res.name, res.salary];
+      db.promise().query(`SELECT id, name FROM department`)
+        .then(([rows, fields]) => {
+          const departmentsArr = rows.map(({ id, name }) => ({ name: name, value: id }));
+          inquirer.prompt([
+            {
+              type: 'list',
+              message: 'Which department does the role belong to?',
+              name: 'department',
+              choices: departmentsArr
+            }    
+          ])
+          .then((res) => {
+            resArr.push(res.department);
+            db.promise().query(`INSERT INTO role (title, salary, department_id)
+                      VALUES (?, ?, ?)`, 
+                      [resArr[0], resArr[1], resArr[2]])
+              .then(() => {
+                console.log(`Added ${resArr[0]} to roles`);
+                prompt();
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          });
+        })
+        .catch((err) => {
+          console.log(err);
         });
-      });
     });
   }
   addEmployee() {
@@ -95,97 +121,126 @@ class Query {
         name: 'last_name'
       }
     ])
-    .then((answer) => {
-      const answerArr = [answer.first_name, answer.last_name];
-      db.query(`SELECT id, title FROM role`, (err, rows) => {
-        const rolesArr = rows.map(({ id, title }) => ({ name: title, value: id }));
-        inquirer.prompt([
-          {
-            type: 'list',
-            message: 'What is the employee\'s role?',
-            name: 'role',
-            choices: rolesArr
-          }    
-        ])
-        .then((answer) => {
-          answerArr.push(answer.role);
-          db.query(`SELECT id, first_name, last_name FROM employee`, (err, rows) => {
-            const nullArr = [{ name: 'None', value: null }];
-            const mappedArr = rows.map(({ id, first_name, last_name }) => ({ name: `${first_name} ${last_name}`, value: id }));
-            const managerArr = nullArr.concat(mappedArr);
-            inquirer.prompt([
-              {
-                type: 'list',
-                message: 'Who is the employee\'s manager?',
-                name: 'manager',
-                choices: managerArr
-              }
-            ])
-            .then((answer) => {
-              answerArr.push(answer.manager);
-              db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
-                        VALUES (?, ?, ?, ?)`, 
-                        [answerArr[0], answerArr[1], answerArr[2], answerArr[3]]);
-              console.log(`Added ${answerArr[0]} ${answerArr[1]} to employees`);
-              prompt();
-            });
-          });
-        });
-      });
-    });
-  }
-  updateEmployeeRole() {
-    db.query(`SELECT id, first_name, last_name FROM employee`, (err, rows) => {
-      const employeeArr = rows.map(({ id, first_name, last_name }) => ({ name: `${first_name} ${last_name}`, value: id }));
-      inquirer.prompt([
-        {
-          type: 'list',
-          message: 'Which employee\'s role do you want to update?',
-          name: 'employee',
-          choices: employeeArr
-        }
-      ])
-      .then((answer) => {
-        const answerArr = [answer.employee];
-        db.query(`SELECT id, title FROM role`, (err, rows) => {
+    .then((res) => {
+      const resArr = [res.first_name, res.last_name];
+      db.promise().query(`SELECT id, title FROM role`)
+        .then(([rows, fields]) => {
           const rolesArr = rows.map(({ id, title }) => ({ name: title, value: id }));
           inquirer.prompt([
             {
               type: 'list',
-              message: 'Which role do you want to assign the selected employee?',
+              message: 'What is the employee\'s role?',
               name: 'role',
               choices: rolesArr
             }    
           ])
-          .then((answer) => {
-            answerArr.push(answer.role);
-            db.query(`SELECT id, first_name, last_name FROM employee`, (err, rows) => {
-              const nullArr = [{ name: 'None', value: null }];
-              const mappedArr = rows.map(({ id, first_name, last_name }) => ({ name: `${first_name} ${last_name}`, value: id }));
-              const managerArr = nullArr.concat(mappedArr);
+          .then((res) => {
+            resArr.push(res.role);
+            db.promise().query(`SELECT id, first_name, last_name FROM employee`)
+              .then(([rows, fields]) => {
+                const nullArr = [{ name: 'None', value: null }];
+                const mappedArr = rows.map(({ id, first_name, last_name }) => ({ name: `${first_name} ${last_name}`, value: id }));
+                const managerArr = nullArr.concat(mappedArr);
+                inquirer.prompt([
+                  {
+                    type: 'list',
+                    message: 'Who is the employee\'s manager?',
+                    name: 'manager',
+                    choices: managerArr
+                  }
+                ])
+                .then((res) => {
+                  resArr.push(res.manager);
+                  db.promise().query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
+                            VALUES (?, ?, ?, ?)`, 
+                            [resArr[0], resArr[1], resArr[2], resArr[3]])
+                    .then(() => {
+                      console.log(`Added ${resArr[0]} ${resArr[1]} to employees`);
+                      prompt();
+                    })
+                    .catch((err) => {
+                      console.log(err);
+                    });
+                });  
+              })
+              .catch((err) => {
+                console.log(err);
+              });
+          });  
+        })
+        .catch((err) => {
+          console.log(err);
+        });
+      });
+  }
+  updateEmployeeRole() {
+    db.promise().query(`SELECT id, first_name, last_name FROM employee`)
+      .then(([rows, fields]) => {
+        const employeeArr = rows.map(({ id, first_name, last_name }) => ({ name: `${first_name} ${last_name}`, value: id }));
+        inquirer.prompt([
+          {
+            type: 'list',
+            message: 'Which employee\'s role do you want to update?',
+            name: 'employee',
+            choices: employeeArr
+          }
+        ])
+        .then((res) => {
+          const resArr = [res.employee];
+          db.promise().query(`SELECT id, title FROM role`)
+            .then(([rows, fields]) => {
+              const rolesArr = rows.map(({ id, title }) => ({ name: title, value: id }));
               inquirer.prompt([
                 {
                   type: 'list',
-                  message: 'Who is the employee\'s new manager?',
-                  name: 'manager',
-                  choices: managerArr
-                }
+                  message: 'Which role do you want to assign the selected employee?',
+                  name: 'role',
+                  choices: rolesArr
+                }    
               ])
-              .then((answer) => {
-                answerArr.push(answer.manager);
-                db.query(`UPDATE employee
-                          SET role_id = ?,
-                              manager_id = ?
-                          WHERE id = ?`, [answerArr[1], answerArr[2], answerArr[0]], (err, rows) => {
-                  console.table(rows);
-                  prompt();
-                });
-              });
+              .then((res) => {
+                resArr.push(res.role);
+                db.promise().query(`SELECT id, first_name, last_name FROM employee`)
+                  .then(([rows, fields]) => {
+                    const nullArr = [{ name: 'None', value: null }];
+                    const mappedArr = rows.map(({ id, first_name, last_name }) => ({ name: `${first_name} ${last_name}`, value: id }));
+                    const managerArr = nullArr.concat(mappedArr);
+                    inquirer.prompt([
+                      {
+                        type: 'list',
+                        message: 'Who is the employee\'s new manager?',
+                        name: 'manager',
+                        choices: managerArr
+                      }
+                    ])
+                    .then((res) => {
+                      resArr.push(res.manager);
+                      db.promise().query(`UPDATE employee
+                                          SET role_id = ?,
+                                              manager_id = ?
+                                          WHERE id = ?`, [resArr[1], resArr[2], resArr[0]])
+                        .then(() => {
+                          console.log(`Updated employee's role`);
+                          prompt();
+                        })
+                        .catch((err) => {
+                          console.log(err);
+                        });
+                    });  
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                  });
+              });  
+            })
+            .catch((err) => {
+              console.log(err);
             });
           });
-        });
+      })
+      .catch((err) => {
+        console.log(err);
       });
-    });
   }
 }
 
@@ -206,9 +261,9 @@ const prompt = () => {
       ]
     }
   ])
-  .then((answer) => {
+  .then((res) => {
     const query = new Query();
-    switch(answer.query) {
+    switch(res.query) {
       case "View all departments":
         query.viewDepartments();
         break;
