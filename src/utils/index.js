@@ -84,32 +84,45 @@ class Query {
         type: 'input',
         message: 'What is the employee\'s last name?',
         name: 'last_name'
-      },
-      {
-        type: 'list',
-        message: 'What is the employee\'s role?',
-        name: 'role',
-        choices: this.#getRolesArr()
-      },
-      {
-        type: 'list',
-        message: 'Who is the employee\'s manager?',
-        name: 'manager',
-        choices: this.#getEmployeesArr()
       }
     ])
     .then((answer) => {
-      let manager_id;
-      if(answer.manager) {
-        manager_id = parseInt(answer.manager);
-      } else {
-        manager_id = answer.manager;
-      }
-      db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
-                VALUES (?, ?, ?, ?)`, 
-                [answer.first_name, answer.last_name, parseInt(answer.role), manager_id]);
-      console.log(`Added ${answer.first_name} ${answer.last_name} to employees`);
-      prompt();
+      const answerArr = [answer.first_name, answer.last_name];
+      db.query(`SELECT id, title FROM role`, (err, rows) => {
+        const rolesArr = rows.map(({ id, title }) => ({ name: title, value: id }));
+        inquirer.prompt([
+          {
+            type: 'list',
+            message: 'What is the employee\'s role?',
+            name: 'role',
+            choices: rolesArr
+          }    
+        ])
+        .then((answer) => {
+          answerArr.push(answer.role);
+          db.query(`SELECT id, first_name, last_name FROM employee`, (err, rows) => {
+            const nullArr = [{ name: 'None', value: null }];
+            const mappedArr = rows.map(({ id, first_name, last_name }) => ({ name: `${first_name} ${last_name}`, value: id }));
+            const employeeArr = nullArr.concat(mappedArr);
+            inquirer.prompt([
+              {
+                type: 'list',
+                message: 'Who is the employee\'s manager?',
+                name: 'manager',
+                choices: employeeArr
+              }
+            ])
+            .then((answer) => {
+              answerArr.push(answer.manager);
+              db.query(`INSERT INTO employee (first_name, last_name, role_id, manager_id)
+                        VALUES (?, ?, ?, ?)`, 
+                        [answerArr[0], answerArr[1], answerArr[2], answerArr[3]]);
+              console.log(`Added ${answerArr[0]} ${answerArr[1]} to employees`);
+              prompt();
+            });
+          });
+        });
+      });
     });
   }
   updateEmployeeRole() {
@@ -148,39 +161,6 @@ class Query {
       });
     });
   }
-  #getDepartmentsArr() {
-    const arr = [];
-    db.query(`SELECT * FROM department`, (err, rows) => {
-      let i = 0;
-      rows.forEach((row) => {
-        arr[i] = { name: row.name, value: row.id.toString() };
-        i++;
-      });
-    });
-    return arr;
-  }
-  #getRolesArr() {
-    const arr = [];
-    db.query(`SELECT * FROM role`, (err, rows) => {
-      let i = 0;
-      rows.forEach((row) => {
-        arr[i] = { name: row.title, value: row.id.toString() };
-        i++;
-      });
-    });
-    return arr;
-  }
-  #getEmployeesArr() {
-    const arr = [{ name: 'None', value: null }];
-    db.query(`SELECT * FROM employee`, (err, rows) => {
-      let i = 1;
-      rows.forEach((row) => {
-        arr[i] = { name: `${row.first_name} ${row.last_name}`, value: row.id.toString() };
-        i++;
-      });
-    });
-    return arr;
-  }  
 }
 
 const prompt = () => {
