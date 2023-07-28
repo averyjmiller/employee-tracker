@@ -22,6 +22,8 @@ A command-line application to manage a company's employee database, using Node.j
 ## Usage
 Run `npm start` in the terminal while inside the repository to run the application locally.
 
+[employee-tracker.webm](https://github.com/averyjmiller/employee-tracker/assets/54604339/558e4c96-e78c-4422-807a-47e6837c5ebe)
+
 ## License
 This repository is covered under MIT License. For more information, check the `LICENSE` file.
 
