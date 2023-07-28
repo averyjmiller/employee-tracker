@@ -2,7 +2,7 @@
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Description
-A command-line application to manage a company's employee database, using Node.js, Inquirer, and MySQL.
+A command-line content management system to manage a company's employee database, using Node.js, Inquirer, and MySQL.
 
 ## Table of Contents
 - [Installation](#installation)
