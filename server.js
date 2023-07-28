@@ -14,5 +14,17 @@ app.use((req, res) => {
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
-  init();
+  console.log(`\n`);
+  console.log(
+`.--------------------------.
+|                          |
+|                          |
+|                          |
+|     EMPLOYEE MANAGER     |
+|                          |
+|                          |
+|                          |
+'--------------------------'`);
+console.log(`\n`);
+init();
 });
